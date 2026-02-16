@@ -1,7 +1,7 @@
-# Use Node.js as the base image
+# استخدام نسخة Node.js مستقرة
 FROM node:18-slim
 
-# Install Python, FFmpeg, and build dependencies
+# تثبيت الأدوات اللازمة (Python و FFmpeg)
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -10,21 +10,21 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# تحديد مجلد العمل
 WORKDIR /app
 
-# Copy package files and install Node dependencies
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install
+# نسخ ملف المكتبات فقط وتثبيتها
+COPY package.json ./
+RUN npm install
 
-# Install Python dependencies
+# تثبيت أداة المزامنة (ffsubsync)
 RUN pip3 install ffsubsync --break-system-packages
 
-# Copy the rest of the application code
+# نسخ بقية الملفات
 COPY . .
 
-# Expose the port
+# تحديد المنفذ (Render يستخدم 10000)
 EXPOSE 10000
 
-# Start the application
+# تشغيل الإضافة
 CMD ["node", "server.js"]
