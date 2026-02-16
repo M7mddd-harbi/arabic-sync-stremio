@@ -5,7 +5,7 @@ const fs = require("fs")
 const { syncSubtitles } = require("./sync")
 
 const app = express()
-const cache = new NodeCache({ stdTTL: 86400 })
+const cache = new NodeCache({ stdTTL: 86400 }) // 1 يوم
 
 const DOWNLOAD_DIR = "/tmp/downloads"
 const SYNC_DIR = "/tmp/synced"
@@ -20,20 +20,22 @@ const builder = new addonBuilder({
     description: "Auto sync Arabic subtitles using FFsubsync",
     resources: ["subtitles"],
     types: ["movie", "series"],
-    idPrefixes: ["tt"],
-    catalogs: []
+    idPrefixes: ["tt"]
 })
 
+// تعريف handler للنصوص المترجمة
 builder.defineSubtitlesHandler(async ({ id }) => {
     const cached = cache.get(id)
     if (cached) return { subtitles: cached }
     return { subtitles: [] }
 })
 
+// نقطة الوصول لملف manifest.json
 app.get("/manifest.json", (req, res) => {
     res.json(builder.getManifest())
 })
 
+// نقطة الوصول لمزامنة الترجمة
 app.get("/sync", async (req, res) => {
     const { videoUrl, subtitleUrl, id } = req.query
     if (!videoUrl || !subtitleUrl || !id)
@@ -49,6 +51,7 @@ app.get("/sync", async (req, res) => {
     }
 })
 
+// تنزيل الملف بعد المزامنة
 app.get("/file/:id", (req, res) => {
     const filePath = `${SYNC_DIR}/${req.params.id}_synced.srt`
     if (fs.existsSync(filePath)) {
@@ -58,8 +61,10 @@ app.get("/file/:id", (req, res) => {
     }
 })
 
-app.use("/", builder.getInterface())
+// استخدام واجهة stremio-addon-sdk الصحيحة مع Express
+app.use("/", builder.getInterface().getRouter()) // <= هذا التعديل المهم
 
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log("Addon running on port " + PORT))
+
 
