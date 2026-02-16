@@ -1,19 +1,23 @@
-FROM node:18
+FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y ffmpeg python3 python3-venv curl
+# تثبيت أدوات النظام
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    curl \
+    build-essential \
+    gcc \
+    nodejs \
+    npm
 
-# إنشاء بيئة بايثون منفصلة
-RUN python3 -m venv /opt/venv
+# تحديث pip
+RUN pip install --upgrade pip setuptools wheel
 
-# تفعيل البيئة
-ENV PATH="/opt/venv/bin:$PATH"
-
-# تثبيت ffsubsync داخل البيئة
-RUN pip install --upgrade pip
+# تثبيت ffsubsync
 RUN pip install ffsubsync
 
 WORKDIR /app
 
+# تثبيت Node dependencies
 COPY package*.json ./
 RUN npm install
 
