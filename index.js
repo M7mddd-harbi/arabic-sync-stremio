@@ -20,7 +20,8 @@ const builder = new addonBuilder({
     description: "Auto sync Arabic subtitles using FFsubsync",
     resources: ["subtitles"],
     types: ["movie", "series"],
-    idPrefixes: ["tt"]
+    idPrefixes: ["tt"],
+    catalogs: []
 })
 
 builder.defineSubtitlesHandler(async ({ id }) => {
@@ -61,3 +62,4 @@ app.use("/", builder.getInterface())
 
 const PORT = process.env.PORT || 10000
 app.listen(PORT, () => console.log("Addon running on port " + PORT))
+
