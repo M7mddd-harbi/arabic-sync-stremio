@@ -1,28 +1,30 @@
-# دليل رفع الإضافة على Render (مجاناً)
+# Use Node.js as the base image
+FROM node:18-slim
 
-اتبع هذه الخطوات البسيطة لرفع الإضافة وتشغيلها 24/7:
+# Install Python, FFmpeg, and build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    ffmpeg \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-### الخطوة 1: تجهيز الكود على GitHub
-1. قم بإنشاء مستودع (Repository) جديد على حسابك في [GitHub](https://github.com).
-2. ارفع جميع ملفات المجلد `arabic-sync-addon` إلى هذا المستودع.
+# Set working directory
+WORKDIR /app
 
-### الخطوة 2: الربط بمنصة Render
-1. سجل دخولك في موقع [Render](https://render.com) باستخدام حساب GitHub الخاص بك.
-2. اضغط على زر **New +** ثم اختر **Web Service**.
-3. اختر المستودع (Repository) الذي أنشأته في الخطوة السابقة.
+# Copy package files and install Node dependencies
+COPY package.json pnpm-lock.yaml* ./
+RUN npm install -g pnpm && pnpm install
 
-### الخطوة 3: الإعدادات
-1. **Name**: اختر اسماً للإضافة (مثلاً: `arabic-auto-sync`).
-2. **Runtime**: تأكد من اختيار **Docker** (سيقوم Render باكتشاف ملف `Dockerfile` تلقائياً).
-3. **Plan**: اختر النسخة المجانية (**Free**).
-4. اضغط على **Create Web Service**.
+# Install Python dependencies
+RUN pip3 install ffsubsync --break-system-packages
 
-### الخطوة 4: التثبيت في Stremio
-1. انتظر حتى ينتهي Render من بناء الإضافة (ستظهر كلمة **Live** باللون الأخضر).
-2. ستجد رابطاً في أعلى الصفحة يشبه هذا: `https://arabic-auto-sync.onrender.com`.
-3. انسخ الرابط وأضف إليه `/manifest.json` في النهاية.
-4. افتح Stremio، واذهب إلى Add-ons، ثم الصق الرابط:
-   `https://arabic-auto-sync.onrender.com/manifest.json`
+# Copy the rest of the application code
+COPY . .
 
----
-**ملاحظة:** النسخة المجانية من Render "تنام" إذا لم يتم استخدامها لفترة. عند تشغيل فيلم، قد تستغرق الإضافة ثوانٍ إضافية للاستيقاظ في المرة الأولى.
+# Expose the port
+EXPOSE 10000
+
+# Start the application
+CMD ["node", "server.js"]
